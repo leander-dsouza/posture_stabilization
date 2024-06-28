@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <arg name="world_name" default="actor_walk.world"/>
+
+	<!-- Launch Gazebo -->
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+		<arg name="world_name" value="$(find actor_modelling)/worlds/$(arg world_name)"/>
+	</include>
+
+
+</launch>
