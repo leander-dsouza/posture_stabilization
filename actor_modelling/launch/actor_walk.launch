@@ -8,5 +8,15 @@
 		<arg name="world_name" value="$(find actor_modelling)/worlds/$(arg world_name)"/>
 	</include>
 
+	<!-- Launch the key_drive node -->
+	<node name="key_drive_node" pkg="key_teleop_ros" type="key_drive.py" respawn="false" output="screen">
+    <param name="update_rate" value="50.0"/>
+    <param name="max_linear_vel" value="6.0"/>
+    <param name="max_angular_vel" value="5.0"/>
+    <param name="linear_vel_start" value="1.5"/>
+    <param name="angular_vel_start" value="2.5"/>
+    <remap from="cmd_vel" to="cmd_vel"/>
+  </node>
+
 
 </launch>
