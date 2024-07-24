@@ -14,44 +14,50 @@
       <pose>0 0 0 0 0 0</pose>
     </include>
 
-    <!-- Walking Actor -->
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.25 0.25 0.25 1</background>
+      <shadows>false</shadows>
+    </scene>
+    <light type="directional" name="some_light">
+      <diffuse>0.7 0.7 0.7 0</diffuse>
+      <specular>1 1 1 0</specular>
+      <direction>-1 -1 -1</direction>
+    </light>
 
-    <actor name="walking_actor">
-      <pose>0 0 1.0 0 0 1.5707</pose>
+    <!-- NPC -->
+    <actor name="npc">
+      <pose>0 0 1.0 0 0 0</pose>
       <skin>
-        <filename>model://animations/meshes/Idle/Idle.dae</filename>
+        <filename>model://postures/meshes/idle/Idle.dae</filename>
       </skin>
 
       <animation name="idle">
-        <filename>model://animations/meshes/Idle/Idle.dae</filename>
-        <scale>1.000000</scale>
-        <interpolate_x>true</interpolate_x>
+        <filename>model://postures/meshes/idle/Idle.dae</filename>
       </animation>
 
-      <animation name="walking">
-        <filename>model://animations/meshes/Walking/Walking.dae</filename>
-        <scale>1.000000</scale>
-        <interpolate_x>true</interpolate_x>
+      <animation name="looking_up">
+        <filename>model://postures/meshes/looking_up/looking_up.dae</filename>
       </animation>
 
+      <animation name="looking_down">
+        <filename>model://postures/meshes/looking_down/looking_down.dae</filename>
+      </animation>
 
       <plugin name="actor_plugin" filename="libgazebo_ros_actor_command.so">
-        <animation_topic>/cmd_animation</animation_topic>
-        <animation_keys>as</animation_keys>
+        <!-- <follow_mode>path</follow_mode> -->
         <follow_mode>velocity</follow_mode>
         <vel_topic>/cmd_vel</vel_topic>
         <path_topic>/cmd_path</path_topic>
+        <animation_topic>/cmd_animation</animation_topic>
         <animation_factor>1.0</animation_factor>
-        <default_rotation>1.5707</default_rotation>
+        <linear_tolerance>0.1</linear_tolerance>
+        <linear_velocity>1</linear_velocity>
+        <angular_tolerance>0.0872</angular_tolerance>
+        <angular_velocity>2.5</angular_velocity>
+        <default_rotation>0</default_rotation>
       </plugin>
-
     </actor>
-
-
-    <!-- Scene setup -->
-    <scene>
-        <shadows>0</shadows>
-    </scene>
 
   </world>
 </sdf>

@@ -1,0 +1,3 @@
+# map input keys to animations
+'1': 'looking_up'
+'2': 'looking_down'
