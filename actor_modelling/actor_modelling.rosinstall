@@ -1,0 +1,1 @@
+- git: {local-name: gazebo_ros_actor_plugin, uri: 'https://github.com/leander-dsouza/gazebo-ros-actor-plugin.git', version: master}
