@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+
+  <!-- Load the URDF model -->
+  <include file="$(find val_description)/launch/val_rviz.launch">
+    <arg name="sim" value="false"/>
+    <arg name="xacro" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="use_head" value="true"/>
+    <arg name="use_right_arm" value="true"/>
+    <arg name="use_right_hand" value="true"/>
+    <arg name="use_right_leg" value="true"/>
+    <arg name="right_hand_type" value="val_hand"/>
+    <arg name="use_left_arm" value="true"/>
+    <arg name="use_left_hand" value="true"/>
+    <arg name="use_left_leg" value="true"/>
+    <arg name="left_hand_type" value="val_hand"/>
+    <arg name="use_flir" value="false"/>
+  </include>
+
+
+  <!-- Execute the Wireless XSens ROS Driver -->
+  <node name="wireless_xsens_driver_node" pkg="actor_modelling" type="wireless_ros_driver.py" output="screen"/>
+
+  <!-- Launch the joint state converter -->
+  <node name="torso_control_node" pkg="actor_modelling" type="torso_control.py" output="screen"/>
+
+</launch>

@@ -1,12 +1,13 @@
 #! /usr/bin/env python3
-"""Program to generate boilerplate code for ROS1 scripts."""
+"""Program to extract wireless data from XSens IMU."""
 
+import math
 import asyncio
 import numpy as np
 from bleak import BleakClient
 
 import rospy
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, MagneticField
 from tf.transformations import quaternion_from_euler
 from geometry_msgs.msg import Quaternion
 
@@ -26,10 +27,11 @@ class WirelessXSensDriver():
 
     def __init__(self):
         """Initialize the Wireless XSens Driver Class."""
-        rospy.init_node('wireless_xsens_driver', anonymous=True)
+        rospy.init_node('wireless_xsens_driver_node', anonymous=True)
 
-        # Define Publisher
-        self.imu_pub = rospy.Publisher('/imu_raw', Imu, queue_size=10)
+        # Define Publishers
+        self.imu_pub = rospy.Publisher('/imu/data_raw', Imu, queue_size=10)
+        self.mag_pub = rospy.Publisher('/imu/mag', MagneticField, queue_size=10)
 
         asyncio.run(self.bt_listen())
 
@@ -39,7 +41,6 @@ class WirelessXSensDriver():
     def notification_callback(self, _, data):
         """Callback function for the notification."""
         encoded_data = self.encode_data(data)
-        # print(encoded_data)
 
         # Publish IMU Data
         imu_msg = Imu()
@@ -48,7 +49,9 @@ class WirelessXSensDriver():
 
         # Set Orientation
         euler = encoded_data['euler'][0]
-        quaternion = quaternion_from_euler(euler[0], euler[1], euler[2])
+        quaternion = quaternion_from_euler(math.radians(euler[0]),
+                                           math.radians(euler[1]),
+                                           math.radians(euler[2]))
         imu_msg.orientation = Quaternion(*quaternion)
         imu_msg.orientation_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
@@ -67,6 +70,19 @@ class WirelessXSensDriver():
         imu_msg.linear_acceleration_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
         self.imu_pub.publish(imu_msg)
+
+        # Publish Magnetic Field Data
+        mag_msg = MagneticField()
+        mag_msg.header.stamp = rospy.Time.now()
+        mag_msg.header.frame_id = "base_link"
+
+        # magnetic_field = encoded_data['magnetic_field'][0]
+        # mag_msg.magnetic_field.x = magnetic_field[0]
+        # mag_msg.magnetic_field.y = magnetic_field[1]
+        # mag_msg.magnetic_field.z = magnetic_field[2]
+        mag_msg.magnetic_field_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
+
+        self.mag_pub.publish(mag_msg)
 
 
     def encode_data(self, bytes_):
@@ -103,7 +119,7 @@ class WirelessXSensDriver():
                                          binary_message, response=True)
 
             # Wait for the user to press Ctrl+C
-            await asyncio.sleep(10)
+            await asyncio.sleep(30)
 
 
     def terminate(self):
