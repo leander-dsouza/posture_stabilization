@@ -1,0 +1,91 @@
+<launch>
+
+    <node name="dynamic_forearm_swap" pkg="val_description" type="dynamic_forearm_swap.py" output="screen"/>
+
+    <arg name="sim" default="false"/>
+
+    <arg name="xacro" default="true"/>
+    <arg name="gui" default="true"/>
+
+    <arg name="use_head" default="true"/>
+
+    <arg name="use_right_arm" default="true"/>
+    <arg name="use_right_hand" default="true"/>
+    <arg name="use_right_leg" default="true"/>
+
+    <!-- Options for the right hand type -->
+    <arg name="right_hand_type" default="val_hand"/>
+    <!-- <arg name="right_hand_type" default="zimmer"/> -->
+    <!-- <arg name="right_hand_type" default="psyonic"/>     -->
+
+    <arg name="use_left_arm" default="true"/>
+    <arg name="use_left_hand" default="true"/>
+    <arg name="use_left_leg" default="true"/>
+
+    <!-- Options for the left hand type -->
+    <arg name="left_hand_type" default="val_hand"/>
+    <!-- <arg name="left_hand_type" default="zimmer"/> -->
+    <!-- <arg name="left_hand_type" default="psyonic"/> -->
+
+    <arg name="use_flir" default="false"/>
+
+    <!-- If running rviz alongside gazebo sim -->
+    <group if="$(arg sim)">
+        <!-- If using the xacro file -->
+        <group if="$(arg xacro)">
+            <param name="robot_description" command="$(find xacro)/xacro '$(find val_description)/model/robots/valkyrie_sim_gazebo_sync.urdf.xacro'
+                use_head:=$(arg use_head)
+
+                use_right_arm:=$(arg use_right_arm)
+                use_right_leg:=$(arg use_right_leg)
+
+                use_left_arm:=$(arg use_left_arm)
+                use_left_leg:=$(arg use_left_leg)
+
+                "/>
+        </group>
+        <!-- If using the urdf file -->
+        <group unless="$(arg xacro)">
+            <param name="robot_description" textfile="$(find val_description)/urdf/valkyrie_sim_gazebo_sync.urdf"/>
+        </group>
+        <!-- Launch in Rviz   -->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find val_description)/launch/val_rviz_sim.rviz"  if="$(arg gui)"/>
+    </group>
+
+    <!-- If running rviz alongside robot -->
+    <group unless="$(arg sim)">
+        <!-- If using xacro, pull xacro listed -->
+        <group if="$(arg xacro)">
+            <param name="robot_description" command="$(find xacro)/xacro '$(find val_description)/model/robots/valkyrie_A.urdf.xacro'
+                use_head:=$(arg use_head)
+
+                use_right_arm:=$(arg use_right_arm)
+                use_right_hand:=$(arg use_right_hand)
+                use_right_leg:=$(arg use_right_leg)
+
+                right_hand_type:=$(arg right_hand_type)
+
+                use_left_arm:=$(arg use_left_arm)
+                use_left_hand:=$(arg use_left_hand)
+                use_left_leg:=$(arg use_left_leg)
+
+                left_hand_type:=$(arg left_hand_type)
+
+                use_flir:=$(arg use_flir)
+                "/>
+        </group>
+        <!-- If using urdf, pull urdf listed -->
+        <group unless="$(arg xacro)">
+            <param name="robot_description" textfile="$(find val_description)/urdf/valkyrie_A.urdf"/>
+        </group>
+        <!-- send fake joint values -->
+        <!-- <node name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui">
+            <param name="use_gui" value="TRUE"/>
+        </node> -->
+        <!-- Combine joint values -->
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+        <!-- Launch in Rviz   -->
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find val_description)/launch/val_rviz.rviz"  if="$(arg gui)"/>
+    </group>
+
+</launch>

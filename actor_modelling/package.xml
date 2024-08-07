@@ -54,8 +54,7 @@
   <exec_depend>gazebo_ros_actor_plugin</exec_depend>
   <exec_depend>gazebo_msgs</exec_depend>
 
-  <exec_depend>nmea_msgs</exec_depend>
-  <exec_depend>mavros_msgs</exec_depend>
+  <exec_depend>imu_filter_madgwick</exec_depend>
 
 
   <export>

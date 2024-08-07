@@ -48,26 +48,26 @@ class WirelessXSensDriver():
         imu_msg.header.frame_id = "base_link"
 
         # Set Orientation
-        euler = encoded_data['euler'][0]
-        quaternion = quaternion_from_euler(math.radians(euler[0]),
-                                           math.radians(euler[1]),
-                                           math.radians(euler[2]))
-        imu_msg.orientation = Quaternion(*quaternion)
-        imu_msg.orientation_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
-
-        # Set Angular Velocity
-        angular_velocity = encoded_data['angular_velocity'][0]
-        imu_msg.angular_velocity.x = angular_velocity[0]
-        imu_msg.angular_velocity.y = angular_velocity[1]
-        imu_msg.angular_velocity.z = angular_velocity[2]
-        imu_msg.angular_velocity_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
+        # euler = encoded_data['euler'][0]
+        # quaternion = quaternion_from_euler(math.radians(euler[0]),
+        #                                    math.radians(euler[1]),
+        #                                    math.radians(euler[2]))
+        imu_msg.orientation = Quaternion(0, 0, 0, 1)
+        # imu_msg.orientation_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
         # Set Linear Acceleration
-        free_acceleration = encoded_data['free_acceleration'][0]
+        free_acceleration = encoded_data['acceleration'][0]
         imu_msg.linear_acceleration.x = free_acceleration[0]
         imu_msg.linear_acceleration.y = free_acceleration[1]
         imu_msg.linear_acceleration.z = free_acceleration[2]
-        imu_msg.linear_acceleration_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
+        # imu_msg.linear_acceleration_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
+
+        # Set Angular Velocity
+        angular_velocity = encoded_data['angular_velocity'][0]
+        imu_msg.angular_velocity.x = math.radians(angular_velocity[0])
+        imu_msg.angular_velocity.y = math.radians(angular_velocity[1])
+        imu_msg.angular_velocity.z = math.radians(angular_velocity[2])
+        # imu_msg.angular_velocity_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
         self.imu_pub.publish(imu_msg)
 
@@ -76,11 +76,11 @@ class WirelessXSensDriver():
         mag_msg.header.stamp = rospy.Time.now()
         mag_msg.header.frame_id = "base_link"
 
-        # magnetic_field = encoded_data['magnetic_field'][0]
-        # mag_msg.magnetic_field.x = magnetic_field[0]
-        # mag_msg.magnetic_field.y = magnetic_field[1]
-        # mag_msg.magnetic_field.z = magnetic_field[2]
-        mag_msg.magnetic_field_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
+        magnetic_field = encoded_data['magnetic_field'][0]
+        mag_msg.magnetic_field.x = magnetic_field[0]
+        mag_msg.magnetic_field.y = magnetic_field[1]
+        mag_msg.magnetic_field.z = magnetic_field[2]
+        # mag_msg.magnetic_field_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
         self.mag_pub.publish(mag_msg)
 
@@ -101,7 +101,7 @@ class WirelessXSensDriver():
             ('magnetic_field', np.float32, 3),
             ])
 
-        formatted_data = np.frombuffer(bytes_, dtype=custom_mode_1_segments)
+        formatted_data = np.frombuffer(bytes_, dtype=rate_with_mag_segments)
         return formatted_data
 
     async def bt_listen(self):
@@ -114,7 +114,7 @@ class WirelessXSensDriver():
             await client.start_notify(MEDIUM_PAYLOAD_UUID,
                                         self.notification_callback)
 
-            binary_message = CUSTOM_MODE_1
+            binary_message = RATE_WITH_MAG
             await client.write_gatt_char(MEASUREMENT_UUID,
                                          binary_message, response=True)
 

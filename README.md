@@ -35,3 +35,18 @@ A collection of ROS1 packages pertaining to my final dissertation at University 
     ```bash
     catkin build gazebo_ros_actor_plugin actor_modelling
     ```
+
+## Usage
+
+* Launch the simulation for viewing the actor limbo:
+
+    ```bash
+    roslaunch actor_modelling animation_switch.launch
+    ```
+  To switch between the different animations, use the numerical keys 1-2.
+
+* To view a live sync between NASA's Valkyrie robot and the XSens unit, launch the following:
+
+    ```bash
+    roslaunch actor_modelling torso_rviz.launch
+    ```
