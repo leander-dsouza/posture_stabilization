@@ -16,6 +16,7 @@ from geometry_msgs.msg import Quaternion
 MOVELLA_BT_DOT_UUID = "D4:22:CD:00:A7:18"
 MEASUREMENT_UUID = '15172001-4947-11e9-8646-d663bd873d93'
 MEDIUM_PAYLOAD_UUID = "15172003-4947-11E9-8646-D663BD873D93"
+ATOMIC_UNITS_CONVERTER = 235051.8086
 
 
 CUSTOM_MODE_1 = bytes([1, 1, 22]) # [Timestamp, Euler, Free Acceleration, Angular Velocity]
@@ -28,6 +29,9 @@ class WirelessXSensDriver():
     def __init__(self):
         """Initialize the Wireless XSens Driver Class."""
         rospy.init_node('wireless_xsens_driver_node', anonymous=True)
+
+        # Get parameters
+        self.operating_mode = rospy.get_param('~operating_mode', 'custom_mode_1')
 
         # Define Publishers
         self.imu_pub = rospy.Publisher('/imu/data_raw', Imu, queue_size=10)
@@ -47,61 +51,67 @@ class WirelessXSensDriver():
         imu_msg.header.stamp = rospy.Time.now()
         imu_msg.header.frame_id = "base_link"
 
-        # Set Orientation
-        # euler = encoded_data['euler'][0]
-        # quaternion = quaternion_from_euler(math.radians(euler[0]),
-        #                                    math.radians(euler[1]),
-        #                                    math.radians(euler[2]))
-        imu_msg.orientation = Quaternion(0, 0, 0, 1)
-        # imu_msg.orientation_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
-        # Set Linear Acceleration
-        free_acceleration = encoded_data['acceleration'][0]
-        imu_msg.linear_acceleration.x = free_acceleration[0]
-        imu_msg.linear_acceleration.y = free_acceleration[1]
-        imu_msg.linear_acceleration.z = free_acceleration[2]
-        # imu_msg.linear_acceleration_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
+        if self.operating_mode == 'custom_mode_1':
+            # Set Orientation
+            euler = encoded_data['euler'][0]
+            quaternion = quaternion_from_euler(math.radians(euler[0]),
+                                               math.radians(euler[1]),
+                                               math.radians(euler[2]))
+            imu_msg.orientation = Quaternion(*quaternion)
+            # Set Linear Acceleration
+            acceleration = encoded_data['free_acceleration'][0]
+
+        elif self.operating_mode == 'rate_with_mag':
+            # Set Orientation
+            # imu_msg.orientation = Quaternion(0, 0, 0, 1)
+            # Set Linear Acceleration
+            acceleration = encoded_data['acceleration'][0]
+            # Publish Magnetic Field Data
+            mag_msg = MagneticField()
+            mag_msg.header.stamp = rospy.Time.now()
+            mag_msg.header.frame_id = "base_link"
+
+            magnetic_field = encoded_data['magnetic_field'][0]
+            mag_msg.magnetic_field.x = magnetic_field[0] * ATOMIC_UNITS_CONVERTER
+            mag_msg.magnetic_field.y = magnetic_field[1] * ATOMIC_UNITS_CONVERTER
+            mag_msg.magnetic_field.z = magnetic_field[2] * ATOMIC_UNITS_CONVERTER
+
+            self.mag_pub.publish(mag_msg)
+
+        imu_msg.linear_acceleration.x = acceleration[0]
+        imu_msg.linear_acceleration.y = acceleration[1]
+        imu_msg.linear_acceleration.z = acceleration[2]
 
         # Set Angular Velocity
         angular_velocity = encoded_data['angular_velocity'][0]
         imu_msg.angular_velocity.x = math.radians(angular_velocity[0])
         imu_msg.angular_velocity.y = math.radians(angular_velocity[1])
         imu_msg.angular_velocity.z = math.radians(angular_velocity[2])
-        # imu_msg.angular_velocity_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
 
         self.imu_pub.publish(imu_msg)
-
-        # Publish Magnetic Field Data
-        mag_msg = MagneticField()
-        mag_msg.header.stamp = rospy.Time.now()
-        mag_msg.header.frame_id = "base_link"
-
-        magnetic_field = encoded_data['magnetic_field'][0]
-        mag_msg.magnetic_field.x = magnetic_field[0]
-        mag_msg.magnetic_field.y = magnetic_field[1]
-        mag_msg.magnetic_field.z = magnetic_field[2]
-        # mag_msg.magnetic_field_covariance = [1e-9, 0, 0, 0, 1e-9, 0, 0, 0, 1e-9]
-
-        self.mag_pub.publish(mag_msg)
 
 
     def encode_data(self, bytes_):
         """Encode the data."""
         custom_mode_1_segments = np.dtype([
-            ('timestamp', np.uint32, 1),
+            ('timestamp', np.uint32),
             ('euler', np.float32, 3),
             ('free_acceleration', np.float32, 3), # earth's gravity is deducted
             ('angular_velocity', np.float32, 3),
             ])
 
         rate_with_mag_segments = np.dtype([
-            ('timestamp', np.uint32, 1),
+            ('timestamp', np.uint32),
             ('acceleration', np.float32, 3),
             ('angular_velocity', np.float32, 3),
             ('magnetic_field', np.float32, 3),
             ])
 
-        formatted_data = np.frombuffer(bytes_, dtype=rate_with_mag_segments)
+        if self.operating_mode == 'custom_mode_1':
+            formatted_data = np.frombuffer(bytes_, dtype=custom_mode_1_segments)
+        elif self.operating_mode == 'rate_with_mag':
+            formatted_data = np.frombuffer(bytes_, dtype=rate_with_mag_segments)
         return formatted_data
 
     async def bt_listen(self):
@@ -114,13 +124,16 @@ class WirelessXSensDriver():
             await client.start_notify(MEDIUM_PAYLOAD_UUID,
                                         self.notification_callback)
 
-            binary_message = RATE_WITH_MAG
+            if self.operating_mode == 'custom_mode_1':
+                binary_message = CUSTOM_MODE_1
+            elif self.operating_mode == 'rate_with_mag':
+                binary_message = RATE_WITH_MAG
+
             await client.write_gatt_char(MEASUREMENT_UUID,
                                          binary_message, response=True)
 
             # Wait for the user to press Ctrl+C
-            await asyncio.sleep(30)
-
+            await asyncio.sleep(1000)
 
     def terminate(self):
         """Terminate the node."""

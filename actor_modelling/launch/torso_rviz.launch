@@ -1,30 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
 
+  <!-- Set operating mode for the XSens Dot Module -->
+  <arg name="operating_mode" default="rate_with_mag"
+    doc="Operating mode for the XSens Dot Module. Options are: custom_mode_1, rate_with_mag"/>
+
+  <arg name="enable_madgwick" default="false" doc="Enable the Madgwick filter for the IMU data"/>
+  <arg name="use_mag" default="true" doc="Use the magnetometer data for the Madgwick filter"/>
+  <arg name="torso_control_topic" default="/imu/data" doc="IMU topic to read from"/>
+
   <!-- Load the URDF model -->
   <include file="$(find actor_modelling)/launch/val_rviz.launch">
     <arg name="gui" value="false"/>
   </include>
 
   <!-- Run the imu filter madgwick -->
-  <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter" output="screen">
+  <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter" output="screen" if="$(arg enable_madgwick)">
     <remap from="/imu/data_raw"         to="/imu/data_raw"/>
     <remap from="/imu/mag"              to="/imu/mag"/>
     <remap from="/imu/data"             to="/imu/data"/>
-    <param name="use_mag"               value="false"/>
-    <param name="publish_tf"            value="false"/>
-    <param name="remove_gravity_vector" value="true"/>
-
-
-
+    <param name="use_mag"               value="$(arg use_mag)"/>
+    <param name="publish_debug_topics"  value="true"/>
+    <param name="remove_gravity_vector" value="false"/>
   </node>
 
   <!-- Execute the Wireless XSens ROS Driver -->
-  <node name="wireless_xsens_driver_node" pkg="actor_modelling" type="wireless_ros_driver.py" output="screen"/>
+  <node name="wireless_xsens_driver_node" pkg="actor_modelling" type="wireless_ros_driver.py" output="screen">
+    <param name="operating_mode" value="$(arg operating_mode)"/>
+    <remap from="/imu/mag" to="/imu/magnetometer"/>
+  </node>
 
   <!-- Launch the joint state converter -->
   <node name="torso_control_node" pkg="actor_modelling" type="torso_control.py" output="screen">
-    <remap from="/imu/data_raw" to="/imu/data"/>
+    <remap from="/imu/data_raw" to="$(arg torso_control_topic)"/>
   </node>
 
   <!-- Launch in Rviz   -->
