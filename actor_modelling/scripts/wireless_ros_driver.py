@@ -16,7 +16,6 @@ from geometry_msgs.msg import Quaternion
 MOVELLA_BT_DOT_UUID = "D4:22:CD:00:A7:18"
 MEASUREMENT_UUID = '15172001-4947-11e9-8646-d663bd873d93'
 MEDIUM_PAYLOAD_UUID = "15172003-4947-11E9-8646-D663BD873D93"
-ATOMIC_UNITS_CONVERTER = 235051.8086
 
 
 CUSTOM_MODE_1 = bytes([1, 1, 22]) # [Timestamp, Euler, Free Acceleration, Angular Velocity]
@@ -31,7 +30,7 @@ class WirelessXSensDriver():
         rospy.init_node('wireless_xsens_driver_node', anonymous=True)
 
         # Get parameters
-        self.operating_mode = rospy.get_param('~operating_mode', 'custom_mode_1')
+        self.operating_mode = rospy.get_param('~operating_mode', 'rate_with_mag')
 
         # Define Publishers
         self.imu_pub = rospy.Publisher('/imu/data_raw', Imu, queue_size=10)
@@ -73,10 +72,9 @@ class WirelessXSensDriver():
             mag_msg.header.frame_id = "base_link"
 
             magnetic_field = encoded_data['magnetic_field'][0]
-            mag_msg.magnetic_field.x = magnetic_field[0] * ATOMIC_UNITS_CONVERTER
-            mag_msg.magnetic_field.y = magnetic_field[1] * ATOMIC_UNITS_CONVERTER
-            mag_msg.magnetic_field.z = magnetic_field[2] * ATOMIC_UNITS_CONVERTER
-
+            mag_msg.magnetic_field.x = float(magnetic_field[0])
+            mag_msg.magnetic_field.y = float(magnetic_field[1])
+            mag_msg.magnetic_field.z = float(magnetic_field[2])
             self.mag_pub.publish(mag_msg)
 
         imu_msg.linear_acceleration.x = acceleration[0]
@@ -94,6 +92,11 @@ class WirelessXSensDriver():
 
     def encode_data(self, bytes_):
         """Encode the data."""
+        # timestamp: 4 bytes
+        # euler: 3 * 4 bytes
+        # free_acceleration: 3 * 4 bytes
+        # angular_velocity: 3 * 4 bytes
+        # Total: 4 + 3*4 + 3*4 + 3*4 = 40 bytes
         custom_mode_1_segments = np.dtype([
             ('timestamp', np.uint32),
             ('euler', np.float32, 3),
@@ -101,11 +104,17 @@ class WirelessXSensDriver():
             ('angular_velocity', np.float32, 3),
             ])
 
+        # timestamp: 4 bytes
+        # acceleration: 3 * 4 bytes
+        # angular_velocity: 3 * 4 bytes
+        # magnetic_field: 3 * 2 bytes - fixed point
+        # Total: 4 + 3*4 + 3*4 + 3*2 = 34 bytes
         rate_with_mag_segments = np.dtype([
             ('timestamp', np.uint32),
             ('acceleration', np.float32, 3),
             ('angular_velocity', np.float32, 3),
-            ('magnetic_field', np.float32, 3),
+            ('magnetic_field', np.int16, 3),
+            ('zero_padding', np.uint16, 3),
             ])
 
         if self.operating_mode == 'custom_mode_1':
@@ -133,7 +142,7 @@ class WirelessXSensDriver():
                                          binary_message, response=True)
 
             # Wait for the user to press Ctrl+C
-            await asyncio.sleep(1000)
+            await asyncio.sleep(100)
 
     def terminate(self):
         """Terminate the node."""
