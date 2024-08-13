@@ -1,4 +1,9 @@
 # posture_stabilization
+
+![Python](https://img.shields.io/badge/-Python-black?style=plastic&logo=Python)
+![C++](https://img.shields.io/badge/-C%2B%2B-00599C?style=plastic&logo=C%2B%2B)
+![ROS](https://img.shields.io/badge/-ROS-22314E?style=plastic&logo=ROS)
+
 A collection of ROS1 packages pertaining to my final dissertation at University of Sheffield.
 
 ## Installation
@@ -27,13 +32,13 @@ A collection of ROS1 packages pertaining to my final dissertation at University 
 * Install all the ros dependencies:
 
     ```bash
-    rosdep install --from-paths src --ignore-src -r -y
+    rosdep install --from-paths src --ignore-src -r -yqqq
     ```
 
 * Build the packages:
 
     ```bash
-    catkin build gazebo_ros_actor_plugin actor_modelling
+    catkin build gazebo_ros_actor_plugin calibration_imu actor_modelling
     ```
 
 ## Usage
@@ -50,3 +55,10 @@ A collection of ROS1 packages pertaining to my final dissertation at University 
     ```bash
     roslaunch actor_modelling torso_rviz.launch
     ```
+
+* For calibrating the IMU, and estimating the hard-iron and soft-iron distortions, run the following:
+
+    ```bash
+    rosrun calibration_imu magnetometer
+    ```
+    The calibration GUI will appear, and you rotate the IMU away from any magnetic interference to collect data. Stop the data collection after an ellipsoid is formed around the data points.

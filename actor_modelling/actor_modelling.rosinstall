@@ -1,2 +1,3 @@
 - git: {local-name: gazebo_ros_actor_plugin, uri: 'https://github.com/leander-dsouza/gazebo-ros-actor-plugin.git', version: master}
-- git: {local-name: val_description, uri: 'https://gitlab.com/nasa-jsc-robotics/val_description', version: noetic-devel}
+- git: {local-name: val_description, uri: 'https://gitlab.com/nasa-jsc-robotics/val_description.git', version: noetic-devel}
+- git: {local-name: ros-calibration_imu, uri: 'https://github.com/leander-dsouza/ros-calibration_imu.git', version: master}
