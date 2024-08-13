@@ -6,8 +6,6 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Imu1
-        - /Imu1/Status1
       Splitter Ratio: 0.5
     Tree Height: 1028
   - Class: rviz/Selection
@@ -414,30 +412,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Acceleration properties:
-        Acc. vector alpha: 1
-        Acc. vector color: 255; 0; 0
-        Acc. vector scale: 1
-        Derotate acceleration: true
-        Enable acceleration: false
-      Axes properties:
-        Axes scale: 1
-        Enable axes: true
-      Box properties:
-        Box alpha: 1
-        Box color: 255; 0; 0
-        Enable box: false
-        x_scale: 1
-        y_scale: 1
-        z_scale: 1
-      Class: rviz_imu_plugin/Imu
-      Enabled: true
-      Name: Imu
-      Queue Size: 10
-      Topic: /imu/data_raw
-      Unreliable: false
-      Value: true
-      fixed_frame_orientation: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

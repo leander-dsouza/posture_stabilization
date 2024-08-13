@@ -35,6 +35,14 @@ A collection of ROS1 packages pertaining to my final dissertation at University 
     rosdep install --from-paths src --ignore-src -r -yqqq
     ```
 
+* Install all the qt5 dependencies:
+
+    ```bash
+    sudo apt-get install \
+        libqt5datavisualization5-dev \
+        libqt5charts5-dev
+    ```
+
 * Build the packages:
 
     ```bash

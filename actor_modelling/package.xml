@@ -55,7 +55,7 @@
   <exec_depend>gazebo_msgs</exec_depend>
 
   <exec_depend>imu_filter_madgwick</exec_depend>
-  <exec_depend>imu_tools</exec_depend>
+  <exec_depend>imu_complementary_filter</exec_depend>
   <exec_depend>ifopt</exec_depend>
 
 

@@ -5,14 +5,34 @@
   <arg name="operating_mode" default="rate_with_mag"
     doc="Operating mode for the XSens Dot Module. Options are: custom_mode_1, rate_with_mag"/>
 
+  <arg name="use_mag" default="false" doc="Use the magnetometer data for the Madgwick filter"/>
+  <arg name="calibrate_magnetometer" default="false" doc="Calibrate the magnetometer"/>
+
   <arg name="enable_madgwick" default="false" doc="Enable the Madgwick filter for the IMU data"/>
-  <arg name="use_mag" default="true" doc="Use the magnetometer data for the Madgwick filter"/>
+  <arg name="enable_complementary" default="false" doc="Enable the Complementary filter for the IMU data"/>
+
+
   <arg name="torso_control_topic" default="/imu/data" doc="IMU topic to read from"/>
+
+
+  <!-- Magnetometer calibration -->
+  <node name="calibrate_magnetometer" pkg="calibration_imu" type="magnetometer" output="screen" if="$(arg calibrate_magnetometer)">
+    <remap from="/imu/magnetometer" to="/imu/mag"/>
+  </node>
 
   <!-- Load the URDF model -->
   <include file="$(find actor_modelling)/launch/val_rviz.launch">
     <arg name="gui" value="false"/>
   </include>
+
+  <!-- Load the IMU filter complementary -->
+  <node pkg="imu_complementary_filter" type="complementary_filter_node" name="imu_complementary_filter" output="screen" if="$(arg enable_complementary)">
+    <remap from="/imu/data_raw" to="/imu/data_raw"/>
+    <remap from="/imu/mag"      to="/imu/mag"/>
+    <remap from="/imu/data"     to="/imu/data"/>
+    <param name="use_mag" value="$(arg use_mag)"/>
+    <param name="publish_tf" value="false"/>
+  </node>
 
   <!-- Run the imu filter madgwick -->
   <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter" output="screen" if="$(arg enable_madgwick)">
@@ -20,14 +40,18 @@
     <remap from="/imu/mag"              to="/imu/mag"/>
     <remap from="/imu/data"             to="/imu/data"/>
     <param name="use_mag"               value="$(arg use_mag)"/>
-    <param name="publish_debug_topics"  value="true"/>
+    <param name="publish_tf"            value="false"/>
     <param name="remove_gravity_vector" value="false"/>
+
+    <!-- hard iron correction -->
+    <param name="mag_bias_x" value="0.0000206059"/>
+    <param name="mag_bias_y" value="-0.0000053866"/>
+    <param name="mag_bias_z" value="-0.0000038904"/>
   </node>
 
   <!-- Execute the Wireless XSens ROS Driver -->
   <node name="wireless_xsens_driver_node" pkg="actor_modelling" type="wireless_ros_driver.py" output="screen">
     <param name="operating_mode" value="$(arg operating_mode)"/>
-    <remap from="/imu/mag" to="/imu/magnetometer"/>
   </node>
 
   <!-- Launch the joint state converter -->
